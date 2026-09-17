@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalkulator trójkątów podobnych</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #68738a;
+      --primary: #315efb;
+      --primary-dark: #2449cb;
+      --border: #dce3ef;
+      --success-bg: #eaf8f0;
+      --success: #137a43;
+      --error-bg: #fff0f0;
+      --error: #b42318;
+      --shadow: 0 14px 35px rgba(30, 51, 95, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #eef3ff, var(--bg) 45%, #eefaf6);
+    }
+
+    .container {
+      width: min(1050px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 56px;
+    }
+
+    header { margin-bottom: 26px; }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      letter-spacing: -0.04em;
+    }
+
+    .intro {
+      max-width: 720px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(220, 227, 239, 0.9);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 18px;
+      font-size: 1.25rem;
+    }
+
+    .triangle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .triangle-box {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fbfcff;
+    }
+
+    .triangle-box label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+      color: #37425a;
+    }
+
+    input, select, button {
+      width: 100%;
+      border-radius: 11px;
+      font: inherit;
+    }
+
+    input, select {
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: white;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(49, 94, 251, 0.12);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.45;
+      margin: 8px 0 0;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      border: 0;
+      padding: 13px 16px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform .15s ease, background .15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary { color: white; background: var(--primary); }
+    .primary:hover { background: var(--primary-dark); }
+    .secondary { color: #33415f; background: #edf1f8; }
+
+    .result-card { min-height: 100%; }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 290px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .result-content { display: none; }
+    .result-content.visible { display: block; }
+
+    .scale {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px;
+      margin-bottom: 18px;
+      border-radius: 16px;
+      color: white;
+      background: linear-gradient(135deg, #315efb, #744cf6);
+    }
+
+    .scale strong { font-size: 2rem; }
+    .scale span { opacity: .9; font-size: .9rem; }
+
+    .result-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid #edf0f5;
+    }
+
+    .result-row:last-child { border-bottom: 0; }
+    .result-row span { color: var(--muted); }
+    .result-row strong { text-align: right; }
+
+    .formula {
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 14px;
+      background: #f7f9fd;
+      color: #43506b;
+      font-size: .92rem;
+      line-height: 1.55;
+    }
+
+    .message {
+      display: none;
+      padding: 12px 14px;
+      margin-top: 16px;
+      border-radius: 12px;
+      line-height: 1.45;
+      font-size: .92rem;
+    }
+
+    .message.visible { display: block; }
+    .message.error { color: var(--error); background: var(--error-bg); }
+    .message.success { color: var(--success); background: var(--success-bg); }
+
+    .examples {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 720px) {
+      .container { padding-top: 26px; }
+      .layout { grid-template-columns: 1fr; }
+      .triangle-grid { gap: 8px; }
+      .card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Kalkulator trójkątów podobnych</h1>
+      <p class="intro">Wpisz odpowiadające sobie boki dwóch trójkątów. Aplikacja obliczy współczynnik podobieństwa oraz brakujące boki, obwody i pola.</p>
+    </header>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Dane trójkątów</h2>
+        <label for="direction">Kierunek obliczeń</label>
+        <select id="direction" aria-label="Kierunek obliczeń">
+          <option value="first-to-second">Od trójkąta 1 do trójkąta 2</option>
+          <option value="second-to-first">Od trójkąta 2 do trójkąta 1</option>
+        </select>
+        <p class="hint">Podaj co najmniej jeden bok z każdego trójkąta. Boki muszą być odpowiadające sobie, np. a₁ i a₂.</p>
+
+        <div class="triangle-grid" style="margin-top: 18px;">
+          <div class="triangle-box">
+            <label for="a1">a₁</label>
+            <input id="a1" type="number" min="0" step="any" placeholder="np. 6" />
+          </div>
+          <div class="triangle-box">
+            <label for="b1">b₁</label>
+            <input id="b1" type="number" min="0" step="any" placeholder="np. 8" />
+          </div>
+          <div class="triangle-box">
+            <label for="c1">c₁</label>
+            <input id="c1" type="number" min="0" step="any" placeholder="np. 10" />
+          </div>
+        </div>
+
+        <div class="triangle-grid">
+          <div class="triangle-box">
+            <label for="a2">a₂</label>
+            <input id="a2" type="number" min="0" step="any" placeholder="np. 9" />
+          </div>
+          <div class="triangle-box">
+            <label for="b2">b₂</label>
+            <input id="b2" type="number" min="0" step="any" placeholder="np. 12" />
+          </div>
+          <div class="triangle-box">
+            <label for="c2">c₂</label>
+            <input id="c2" type="number" min="0" step="any" placeholder="np. 15" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="calculate">Oblicz</button>
+          <button class="secondary" id="clear">Wyczyść</button>
+        </div>
+        <div id="message" class="message" role="alert"></div>
+        <p class="examples"><strong>Przykład:</strong> wpisz a₁ = 6 i a₂ = 9. Współczynnik od trójkąta 1 do trójkąta 2 wynosi 1,5.</p>
+      </div>
+
+      <div class="card result-card">
+        <h2>Wynik</h2>
+        <div id="empty" class="empty">Wyniki pojawią się tutaj po wpisaniu danych i kliknięciu przycisku „Oblicz”.</div>
+        <div id="result" class="result-content">
+          <div class="scale">
+            <div>
+              <span>Współczynnik podobieństwa</span><br />
+              <strong id="scaleValue">-</strong>
+            </div>
+            <div id="scaleDirection">k</div>
+          </div>
+          <div id="resultRows" class="result-list"></div>
+          <div class="formula" id="formula"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const ids = ['a1', 'b1', 'c1', 'a2', 'b2', 'c2'];
+    const fields = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+    const direction = document.getElementById('direction');
+    const message = document.getElementById('message');
+    const empty = document.getElementById('empty');
+    const result = document.getElementById('result');
+    const resultRows = document.getElementById('resultRows');
+    const formula = document.getElementById('formula');
+
+    function format(value) {
+      if (!Number.isFinite(value)) return 'brak danych';
+      return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 4 }).format(value);
+    }
+
+    function readValue(id) {
+      const value = fields[id].value.trim();
+      return value === '' ? null : Number(value);
+    }
+
+    function showMessage(text, type = 'error') {
+      message.textContent = text;
+      message.className = `message visible ${type}`;
+    }
+
+    function hideMessage() {
+      message.className = 'message';
+      message.textContent = '';
+    }
+
+    function calculate() {
+      hideMessage();
+      const values = Object.fromEntries(ids.map(id => [id, readValue(id)]));
+      const provided = ids.filter(id => values[id] !== null);
+
+      if (provided.length < 2 || !provided.some(id => id.endsWith('1')) || !provided.some(id => id.endsWith('2'))) {
+        showMessage('Podaj co najmniej jeden bok trójkąta 1 i co najmniej jeden odpowiadający mu bok trójkąta 2.');
+        return;
+      }
+
+      if (ids.some(id => values[id] !== null && (!Number.isFinite(values[id]) || values[id] <= 0))) {
+        showMessage('Wszystkie wpisane długości muszą być dodatnimi liczbami.');
+        return;
+      }
+
+      const ratios = [];
+      for (const side of ['a', 'b', 'c']) {
+        if (values[side + '1'] !== null && values[side + '2'] !== null) {
+          ratios.push(values[side + '2'] / values[side + '1']);
+        }
+      }
+
+      let k12;
+      if (ratios.length > 0) {
+        const reference = ratios[0];
+        const consistent = ratios.every(ratio => Math.abs(ratio - reference) <= Math.max(1e-9, Math.abs(reference) * 1e-7));
+        if (!consistent) {
+          showMessage('Podane boki nie tworzą trójkątów podobnych. Stosunki odpowiadających sobie boków muszą być takie same.');
+          return;
+        }
+        k12 = reference;
+      } else {
+        showMessage('Nie można obliczyć współczynnika. Podaj przynajmniej jedną parę odpowiadających sobie boków.');
+        return;
+      }
+
+      const k = direction.value === 'first-to-second' ? k12 : 1 / k12;
+      const source = direction.value === 'first-to-second' ? values : { a1: values.a2, b1: values.b2, c1: values.c2, a2: values.a1, b2: values.b1, c2: values.c1 };
+      const sourceName = direction.value === 'first-to-second' ? 'trójkąt 1' : 'trójkąt 2';
+      const targetName = direction.value === 'first-to-second' ? 'trójkąt 2' : 'trójkąt 1';
+
+      const calculatedSides = ['a', 'b', 'c'].map(side => {
+        const sourceValue = source[side + '1'];
+        const targetValue = source[side + '2'];
+        return { side, value: targetValue ?? (sourceValue !== null ? sourceValue * k : null), missing: targetValue === null && sourceValue !== null };
+      });
+
+      const knownSourceSides = ['a1', 'b1', 'c1'].map(id => source[id]).filter(value => value !== null);
+      const knownTargetSides = ['a2', 'b2', 'c2'].map(id => source[id]).filter(value => value !== null);
+      const sourcePerimeter = knownSourceSides.length === 3 ? knownSourceSides.reduce((sum, value) => sum + value, 0) : null;
+      const targetPerimeter = sourcePerimeter !== null ? sourcePerimeter * k : (knownTargetSides.length === 3 ? knownTargetSides.reduce((sum, value) => sum + value, 0) : null);
+      const sourceArea = source["a1"] !== null && source["b1"] !== null && source["c1"] !== null ? heron(source["a1"], source["b1"], source["c1"]) : null;
+      const targetArea = sourceArea !== null ? sourceArea * k * k : null;
+
+      document.getElementById('scaleValue').textContent = format(k);
+      document.getElementById('scaleDirection').textContent = `${sourceName} → ${targetName}`;
+      resultRows.innerHTML = '';
+
+      calculatedSides.forEach(({ side, value, missing }) => {
+        if (value !== null) addRow(`${side} w ${targetName}`, `${format(value)} j.`, missing ? 'obliczone' : 'podane');
+      });
+      addRow(`Obwód ${targetName}`, targetPerimeter !== null ? `${format(targetPerimeter)} j.` : 'podaj wszystkie trzy boki', '');
+      addRow(`Pole ${targetName}`, targetArea !== null ? `${format(targetArea)} j.²` : 'podaj wszystkie trzy boki', '');
+
+      formula.innerHTML = `<strong>Własności podobieństwa:</strong><br>Stosunek boków: k = ${format(k)}<br>Stosunek obwodów: ${format(k)}<br>Stosunek pól: k² = ${format(k * k)}`;
+      empty.style.display = 'none';
+      result.classList.add('visible');
+      showMessage('Obliczenia wykonano poprawnie.', 'success');
+    }
+
+    function heron(a, b, c) {
+      const s = (a + b + c) / 2;
+      const areaSquared = s * (s - a) * (s - b) * (s - c);
+      return areaSquared > 0 ? Math.sqrt(areaSquared) : null;
+    }
+
+    function addRow(label, value, note) {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      row.innerHTML = `<span>${label}${note ? ` <small>(${note})</small>` : ''}</span><strong>${value}</strong>`;
+      resultRows.appendChild(row);
+    }
+
+    document.getElementById('calculate').addEventListener('click', calculate);
+    document.getElementById('clear').addEventListener('click', () => {
+      ids.forEach(id => fields[id].value = '');
+      empty.style.display = 'grid';
+      result.classList.remove('visible');
+      hideMessage();
+    });
+
+    ids.forEach(id => fields[id].addEventListener('keydown', event => {
+      if (event.key === 'Enter') calculate();
+    }));
+  </script>
+</body>
+</html>
